@@ -60,6 +60,7 @@ import javax.net.ssl.*;
 import java.io.*;
 import java.net.*;
 import java.security.*;
+import java.io.IOException;
 
 public class EasySSLProtocolSocketFactory implements SchemeLayeredSocketFactory
 {
@@ -75,7 +76,7 @@ public class EasySSLProtocolSocketFactory implements SchemeLayeredSocketFactory
                 this.sslcontext = trustedauthentication(params);
                 if(this.sslcontext == null)
                     this.sslcontext = stdauthentication();
-    } catch (KeyManagementException e) {
+            } catch (KeyManagementException e) {
                 throw new HTTPException("Key Management exception: " + e.getMessage());
             } catch (NoSuchAlgorithmException e) {
                 throw new HTTPException("Unsupported algorithm exception: " + e.getMessage());
@@ -226,5 +227,4 @@ public class EasySSLProtocolSocketFactory implements SchemeLayeredSocketFactory
         sslsock.setSoTimeout(soTimeout);
         return sslsock;
     }
-
 }

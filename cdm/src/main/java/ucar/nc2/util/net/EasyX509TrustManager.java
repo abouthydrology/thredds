@@ -105,4 +105,3 @@ public class EasyX509TrustManager implements X509TrustManager
     }
  
 }
-
