@@ -57,8 +57,9 @@ import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 
-import org.apache.commons.httpclient.Header;
+import org.apache.http.Header;
 import thredds.catalog.ServiceType;
+import ucar.nc2.util.net.HTTPFactory;
 import ucar.unidata.util.StringUtil2;
 import ucar.unidata.util.Urlencoded;
 
@@ -872,7 +873,7 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
 
         HTTPMethod method = null;
         try {
-            method = HTTPMethod.Head(location);
+            method = HTTPFactory.Head(location);
             int statusCode = method.execute();
             if(statusCode >= 300) {
                 if(statusCode == 401)
@@ -910,7 +911,7 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
     try {
       // For some reason, the head method is not using credentials
       // method = session.newMethodHead(location + ".dds");
-      method = HTTPMethod.Get(location + ".dds");
+      method = HTTPFactory.Get(location + ".dds");
 
       int status = method.execute();
       if (status == 200) {
@@ -949,7 +950,7 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
     else if (location.endsWith(".dsr"))
       location = location.substring(0, location.length() - ".dsr".length());
     try {
-      method = HTTPMethod.Get(location + ".dmr");
+      method = HTTPFactory.Get(location + ".dmr");
 
       int status = method.execute();
       if (status == 200) {
@@ -970,9 +971,6 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
       if (method != null) method.close();
     }
   }
-
-
-  private static boolean isexternalclient = false;
 
   static private NetcdfFile acquireDODS(FileCache cache, FileFactory factory, Object hashKey,
                                         String location, int buffer_size, ucar.nc2.util.CancelTask cancelTask, Object spiObject) throws IOException {
