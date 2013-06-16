@@ -57,8 +57,9 @@ import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 
-import org.apache.commons.httpclient.Header;
+import org.apache.http.Header;
 import thredds.catalog.ServiceType;
+import ucar.nc2.util.net.HTTPFactory;
 import ucar.unidata.util.StringUtil2;
 import ucar.unidata.util.Urlencoded;
 
@@ -853,44 +854,46 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
    * @param location the url to disambiguate
    * @return ServiceType indicating how to handle the url
    */
-  @Urlencoded
-  static private ServiceType
-  disambiguateHttp(String location)
-          throws IOException {
-    // aggregation cache files are of form
-    // http://www.esrl.noaa.gov/psd/thredds/dodsC/Datasets/ncep.reanalysis2.dailyavgs/pressure/air.1981.nc#320092027
+    @Urlencoded
+    static private ServiceType
+    disambiguateHttp(String location)
+        throws IOException
+    {
+      // aggregation cache files are of form
+      // http://www.esrl.noaa.gov/psd/thredds/dodsC/Datasets/ncep.reanalysis2.dailyavgs/pressure/air.1981.nc#320092027
 
-    // remove any fragment
-    int pos = location.lastIndexOf("#");
-    if (pos >= 0)
-      location = location.substring(0, pos);
+        // remove any fragment
+        int pos = location.lastIndexOf("#");
+        if(pos >= 0)
+            location = location.substring(0,pos);
 
-    ServiceType result = checkIfDods(location); // dods
-    if (result != null)
-      return result;
-    result = checkIfDap4(location); // dap4
-    if (result != null)
-      return result;
+        ServiceType result = checkIfDods(location); // dods
+        if(result != null)
+            return result;
+        result = checkIfDap4(location); // dap4
+        if (result != null)
+            return result;
 
-    HTTPMethod method = null;
-    try {
-      method = HTTPMethod.Head(location);
-      int statusCode = method.execute();
-      if (statusCode >= 300) {
-        if (statusCode == 401)
-          throw new IOException("Unauthorized to open dataset " + location);
-        else
-          throw new IOException(location + " is not a valid URL, return status=" + statusCode);
-      }
-      Header h = method.getResponseHeader("Content-Description");
-      if ((h != null) && (h.getValue() != null)) {
-        String v = h.getValue();
-        if (v.equalsIgnoreCase("ncstream"))
-          return ServiceType.CdmRemote;
-      }
-      return null;
-    } finally {
-      if (method != null) method.close();
+        HTTPMethod method = null;
+        try {
+            method = HTTPFactory.Head(location);
+            int statusCode = method.execute();
+            if(statusCode >= 300) {
+                if(statusCode == 401)
+                    throw new IOException("Unauthorized to open dataset " + location);
+                else
+                    throw new IOException(location + " is not a valid URL, return status=" + statusCode);
+            }
+            Header h = method.getResponseHeader("Content-Description");
+            if((h != null) && (h.getValue() != null)) {
+                String v = h.getValue();
+                if(v.equalsIgnoreCase("ncstream"))
+                return ServiceType.CdmRemote;
+            }
+            return null;
+        } finally {
+            if(method != null) method.close();
+        }
     }
   }
 
@@ -912,7 +915,7 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
     try {
       // For some reason, the head method is not using credentials
       // method = session.newMethodHead(location + ".dds");
-      method = HTTPMethod.Get(location + ".dds");
+      method = HTTPFactory.Get(location + ".dds");
 
       int status = method.execute();
       if (status == 200) {
@@ -951,7 +954,7 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
     else if (location.endsWith(".dsr"))
       location = location.substring(0, location.length() - ".dsr".length());
     try {
-      method = HTTPMethod.Get(location + ".dmr");
+      method = HTTPFactory.Get(location + ".dmr");
 
       int status = method.execute();
       if (status == 200) {
@@ -972,9 +975,6 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
       if (method != null) method.close();
     }
   }
-
-
-  private static boolean isexternalclient = false;
 
   static private NetcdfFile acquireDODS(FileCache cache, FileFactory factory, Object hashKey,
                                         String location, int buffer_size, ucar.nc2.util.CancelTask cancelTask, Object spiObject) throws IOException {
