@@ -70,12 +70,11 @@ public class EasyX509TrustManager implements X509TrustManager {
    */
   public EasyX509TrustManager(KeyStore keystore) throws NoSuchAlgorithmException, KeyStoreException {
     super();
-    TrustManagerFactory factory = TrustManagerFactory.getInstance("SunX509");
+    TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
     factory.init(keystore);
     TrustManager[] trustmanagers = factory.getTrustManagers();
-    if (trustmanagers.length == 0) {
-      throw new NoSuchAlgorithmException("SunX509 trust manager not supported");
-    }
+    if (trustmanagers.length == 0)
+	throw new NoSuchAlgorithmException("No trust manager found");
     this.standardTrustManager = (X509TrustManager) trustmanagers[0];
   }
 
@@ -128,7 +127,5 @@ public class EasyX509TrustManager implements X509TrustManager {
         } else // Do a complete certificates check
             standardTrustManager.checkServerTrusted(certificates,authType);
     }
-    return;
   }
-  
 }

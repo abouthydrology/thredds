@@ -33,14 +33,12 @@
 
 package thredds.ui.monitor;
 
-import ucar.nc2.util.net.HTTPException;
-import ucar.nc2.util.net.HTTPSession;
-import org.apache.commons.httpclient.auth.CredentialsProvider;
+import org.apache.http.client.CredentialsProvider;
+import ucar.nc2.util.net.*;
 import thredds.logs.LogReader;
 import thredds.logs.LogCategorizer;
 import ucar.nc2.ui.widget.*;
 import ucar.nc2.util.IO;
-import ucar.nc2.util.net.HttpClientManager;
 import ucar.util.prefs.ui.ComboBox;
 import ucar.util.prefs.ui.Debug;
 import ucar.util.prefs.PreferencesExt;
@@ -228,7 +226,7 @@ public class TdsMonitor extends JPanel {
               File localDir = LogLocalManager.getDirectory(data.server, "");
               localDir.mkdirs();
               File file = new File(localDir, "roots.txt");
-              HTTPSession session = new HTTPSession(urls);
+              HTTPSession session = HTTPFactory.newSession(urls);
               // session.setCredentialsProvider(provider);
               session.setUserAgent("TdsMonitor");
               HttpClientManager.copyUrlContentsToFile(session, urls, file);
