@@ -895,7 +895,7 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
             if(method != null) method.close();
         }
     }
-  }
+
 
   // not sure what other opendap servers do, so fall back on check for dds
   static private ServiceType checkIfDods(String location) throws IOException {
