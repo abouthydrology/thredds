@@ -227,4 +227,5 @@ public class EasySSLProtocolSocketFactory implements SchemeLayeredSocketFactory
         sslsock.setSoTimeout(soTimeout);
         return sslsock;
     }
+
 }
