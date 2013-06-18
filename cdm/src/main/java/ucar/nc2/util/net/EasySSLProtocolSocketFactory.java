@@ -57,33 +57,117 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 
 import javax.net.ssl.*;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
+import java.security.*;
 
 public class EasySSLProtocolSocketFactory implements SchemeLayeredSocketFactory
 {
 
     private SSLContext sslcontext = null;
 
-    private static SSLContext createEasySSLContext()
+    private SSLContext createSSLContext(HttpParams params)
         throws IOException
     {
-        try {
-            SSLContext context = SSLContext.getInstance("TLS");
-            context.init(null, new TrustManager[]{new EasyX509TrustManager(null)}, null);
-            return context;
-        } catch (Exception e) {
-            throw new IOException(e.getMessage());
-        }
+        if(this.sslcontext == null)
+            try {
+                // Get the Desired kind of authentication
+                this.sslcontext = trustedauthentication(params);
+                if(this.sslcontext == null)
+                    this.sslcontext = stdauthentication();
+    } catch (KeyManagementException e) {
+                throw new HTTPException("Key Management exception: " + e.getMessage());
+            } catch (NoSuchAlgorithmException e) {
+                throw new HTTPException("Unsupported algorithm exception: " + e.getMessage());
+            } catch (KeyStoreException e) {
+                throw new HTTPException("Keystore exception: " + e.getMessage());
+            } catch (GeneralSecurityException e) {
+                throw new HTTPException("Key management exception: " + e.getMessage());
+            } catch (IOException e) {
+                throw new HTTPException("I/O error reading keystore/truststore file: " + e.getMessage());
+            } catch (Exception e) {
+                throw new IOException(e.getMessage(), e);
+            }
+        return this.sslcontext;
     }
 
-
-    private SSLContext getSSLContext() throws IOException
+    // Default is to try self-signed certificates
+    private SSLContext
+    stdauthentication()
+        throws Exception
     {
-        if(this.sslcontext == null) {
-            this.sslcontext = createEasySSLContext();
+        SSLContext context = SSLContext.getInstance("TLS");
+        context.init(null, new TrustManager[]{new EasyX509TrustManager(null)}, null);
+        return context;
+    }
+
+    private SSLContext
+    trustedauthentication(HttpParams params)
+        throws Exception
+    {
+        String keypath = null;
+        String keypassword = null;
+        String trustpath = null;
+        String trustpassword = null;
+        HTTPSSLProvider provider = null;
+        if(params == null) return null;
+        Object o = params.getParameter(HTTPAuthScheme.PROVIDER);
+        if(o == null) return null;
+        if(!(o instanceof HTTPSSLProvider))
+            throw new HTTPException("EasySSLProtocolSocketFactory: provide is not SSL provider");
+        provider = (HTTPSSLProvider)o;
+        keypath = provider.getKeystore();
+        keypassword = provider.getKeypassword();
+        trustpath = provider.getTruststore();
+        trustpassword = provider.getTrustpassword();
+
+        TrustManager[] trustmanagers = null;
+        KeyManager[] keymanagers = null;
+
+        KeyStore keystore = buildstore(keypath, keypassword, "key");
+        if(keystore != null) {
+            KeyManagerFactory kmfactory = KeyManagerFactory.getInstance("SunX509");
+            kmfactory.init(keystore, keypassword.toCharArray());
+            keymanagers = kmfactory.getKeyManagers();
         }
-        return this.sslcontext;
+        KeyStore truststore = buildstore(trustpath, trustpassword, "trust");
+        if(truststore != null) {
+            //todo: TrustManagerFactory trfactory = TrustManagerFactory.getInstance("SunX509");
+            //trfactory.init(truststore, trustpassword.toCharArray());
+            //trustmanagers = trfactory.getTrustManagers();
+            trustmanagers = new TrustManager[]{new EasyX509TrustManager(truststore)};
+        }
+        if(trustmanagers == null)
+            trustmanagers = new TrustManager[]{new EasyX509TrustManager(null)};
+
+        SSLContext sslcontext = SSLContext.getInstance("TSL");
+        sslcontext.init(keymanagers, trustmanagers, null);
+        return sslcontext;
+    }
+
+    static KeyStore
+    buildstore(String path, String password, String prefix)
+        throws HTTPException
+    {
+        KeyStore store = null;
+        try {
+            if(path != null && password != null) {
+                File storefile = new File(path);
+                if(!storefile.canRead())
+                    throw new HTTPException("Cannot read specified " + prefix + "store:" + storefile.getAbsolutePath());
+                store = KeyStore.getInstance("JKS");
+                InputStream is = null;
+                try {
+                    is = new FileInputStream(storefile);
+                    store.load(is, password.toCharArray());
+                } finally {
+                    if(is != null) is.close();
+                }
+            }
+        } catch (Exception e) {
+            throw new HTTPException(e);
+        }
+        return store;
     }
 
     // -------------------------------------------------------------------
@@ -105,6 +189,7 @@ public class EasySSLProtocolSocketFactory implements SchemeLayeredSocketFactory
 
     //SchemeLayeredSocketFactory API
 
+    @Override
     public boolean isSecure(Socket socket)
         throws IllegalArgumentException
     {
@@ -115,14 +200,13 @@ public class EasySSLProtocolSocketFactory implements SchemeLayeredSocketFactory
     public Socket createLayeredSocket(Socket socket, String s, int i, HttpParams httpParams)
         throws IOException
     {
-        //return getSSLContext().getSocketFactory().createSocket();
-        return socket;
+        return createSSLContext(httpParams).getSocketFactory().createSocket();
     }
 
     public Socket createSocket(HttpParams httpParams)
         throws IOException
     {
-        return getSSLContext().getSocketFactory().createSocket();
+        return createSSLContext(httpParams).getSocketFactory().createSocket();
     }
 
     public Socket connectSocket(Socket sock,
@@ -142,4 +226,5 @@ public class EasySSLProtocolSocketFactory implements SchemeLayeredSocketFactory
         sslsock.setSoTimeout(soTimeout);
         return sslsock;
     }
+
 }
