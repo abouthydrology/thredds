@@ -47,6 +47,9 @@ public enum HTTPAuthScheme
     NTLM("NTLM"),
     ANY("ANY");
 
+    // Define parameter names
+    static public final String PROVIDER  = "HTTP.provider";
+
     // Define the associated standard name
     private final String name;
 
