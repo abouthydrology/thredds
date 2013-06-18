@@ -714,6 +714,9 @@ public class HTTPMethod
     {
         String url = session.getURL();
         if(url == null) url = HTTPAuthStore.ANY_URL;
+	HttpParams params = method.getMethodParameters();
+	if(params == null) return;
+	
 
         //todo: Pass down info to the socket factory
         // Provide a credentials (provider) to enact the process
