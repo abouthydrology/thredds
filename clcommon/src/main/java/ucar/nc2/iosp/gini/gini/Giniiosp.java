@@ -30,7 +30,7 @@
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE ACCESS, USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-package ucar.nc2.iosp.gini.gini;
+package ucar.nc2.iosp.gini;
 
 import thredds.catalog.DataFormatType;
 import ucar.ma2.*;
@@ -492,7 +492,7 @@ public class Giniiosp extends AbstractIOServiceProvider {
   public static void main(String args[]) throws Exception, IOException, InstantiationException, IllegalAccessException {
     //String fileIn = "/home/yuanho/dev/netcdf-java-2.2/src/ucar/nc2/n0r_20040823_2215";    // uncompressed
     String fileIn = "c:/data/image/gini/n0r_20041013_1852";
-    ucar.nc2.NetcdfFile.registerIOProvider(Giniiosp.class);
+    ucar.nc2.NetcdfFile.registerIOProvider(ucar.nc2.iosp.gini.Giniiosp.class);
     ucar.nc2.NetcdfFile ncf = ucar.nc2.NetcdfFile.open(fileIn);
 
     List alist = ncf.getGlobalAttributes();

@@ -30,12 +30,12 @@
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE ACCESS, USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-package ucar.nc2.iosp.fysat.fysat;
+package ucar.nc2.iosp.fysat;
 
 import ucar.ma2.*;
 import ucar.nc2.*;
-import ucar.nc2.iosp.fysat.fysat.FysatHeader.Vinfo;
-import ucar.nc2.iosp.fysat.fysat.util.EndianByteBuffer;
+import ucar.nc2.iosp.fysat.FysatHeader.Vinfo;
+import ucar.nc2.iosp.fysat.util.EndianByteBuffer;
 import ucar.nc2.iosp.AbstractIOServiceProvider;
 
 import java.io.*;

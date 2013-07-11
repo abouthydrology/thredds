@@ -514,8 +514,14 @@ public class NetcdfFileWriter {
       }
     }
 
-    Variable v = new Variable(ncfile, g, null, shortName);
-    v.setDataType(dataType);
+    Variable v = null;
+    if (dataType == DataType.STRUCTURE) {
+      v = new Structure(ncfile, g, null, shortName);
+    }  else {
+      v = new Variable(ncfile, g, null, shortName);
+      v.setDataType(dataType);
+    }
+
     v.setDimensions(dims);
 
     long size = v.getSize() * v.getElementSize();
@@ -891,6 +897,13 @@ public class NetcdfFileWriter {
   public synchronized void close() throws java.io.IOException {
     if (spiw != null) {
       flush();
+      spiw.close();
+      spiw = null;
+    }
+  }
+
+  public void abort() throws java.io.IOException {
+    if (spiw != null) {
       spiw.close();
       spiw = null;
     }

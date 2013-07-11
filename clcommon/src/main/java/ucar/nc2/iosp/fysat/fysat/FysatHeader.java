@@ -30,7 +30,7 @@
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE ACCESS, USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-package ucar.nc2.iosp.fysat.fysat;
+package ucar.nc2.iosp.fysat;
 
 
 import java.io.*;
@@ -40,8 +40,8 @@ import java.text.*;
 
 import ucar.nc2.*;
 import ucar.nc2.constants.*;
-import ucar.nc2.iosp.fysat.fysat.util.EndianByteBuffer;
 import ucar.nc2.units.DateFormatter;
+import ucar.nc2.iosp.fysat.util.EndianByteBuffer;
 
 import ucar.unidata.geoloc.*;
 import ucar.unidata.geoloc.projection.LambertConformal;

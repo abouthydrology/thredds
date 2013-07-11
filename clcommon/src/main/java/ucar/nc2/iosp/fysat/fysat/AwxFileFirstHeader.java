@@ -1,9 +1,9 @@
 /**
  * 
  */
-package ucar.nc2.iosp.fysat.fysat;
+package ucar.nc2.iosp.fysat;
 
-import ucar.nc2.iosp.fysat.fysat.util.EndianByteBuffer;
+import ucar.nc2.iosp.fysat.util.EndianByteBuffer;
 
 
 /**

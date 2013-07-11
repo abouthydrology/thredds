@@ -655,7 +655,7 @@ public class Variable extends CDMNode implements VariableIF, ProxyReader {
    * <p/>
    * If the Variable is a member of an array of Structures, this returns only the variable's data
    * in the first Structure, so that the Array shape is the same as the Variable.
-   * To read the data in all structures, use readAllStructures().
+   * To read the data in all structures, use ncfile.readSectionSpec().
    * <p/>
    * Note this only allows you to specify a subset of this variable.
    * If the variable is nested in a array of structures and you want to subset that, use
@@ -679,7 +679,7 @@ public class Variable extends CDMNode implements VariableIF, ProxyReader {
    * <p/>
    * If the Variable is a member of an array of Structures, this returns only the variable's data
    * in the first Structure, so that the Array shape is the same as the Variable.
-   * To read the data in all structures, use readAllStructures().
+   * To read the data in all structures, use ncfile.readSection().
    *
    * @return the requested data in a memory-resident Array.
    */
@@ -1048,7 +1048,15 @@ public class Variable extends CDMNode implements VariableIF, ProxyReader {
    * String representation of Variable and its attributes.
    */
   public String toStringDebug() {
-    return ncfile.toStringDebug(this);
+    Formatter  f = new Formatter();
+    f.format("Variable %s", getFullName());
+    if (ncfile != null) {
+      f.format(" in file %s", ncfile.getLocation());
+      String extra = ncfile.toStringDebug(this);
+      if (extra != null)
+        f.format(" %s", extra);
+    }
+    return f.toString();
   }
 
   private static boolean showSize = false;

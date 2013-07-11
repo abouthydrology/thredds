@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ucar.nc2.iosp.fysat.fysat;
+package ucar.nc2.iosp.fysat;
 
 import java.io.IOException;
 

@@ -1287,21 +1287,13 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
 
   }
 
-  /*
-  @Override
-  protected void finalize() throws Throwable {
-    if (!isClosed) {
-      try {
-        if (agg != null) agg.close();
-        agg = null;
-        if (orgFile != null) orgFile.close();
-        orgFile = null;
-      } finally {
-        super.finalize();
-      }
-      isClosed = true;
-    }
-  }  */
+  /* @Override
+  public Object sendIospMessage(Object message) {
+    if (orgFile != null)
+      return orgFile.sendIospMessage(message);
+    else
+      return false;
+  } */
 
   /*
    * Check if file has changed, and reread metadata if needed.
