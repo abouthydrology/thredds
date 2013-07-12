@@ -175,41 +175,50 @@ public class HTTPSession
         {
         }
 
-	public boolean
-	retryRequest(IOException exception,
+        public boolean
+        retryRequest(IOException exception,
                      int executionCount,
                      HttpContext context)
         {
             if(verbose) {
                 HTTPSession.log.debug(String.format("Retry: count=%d exception=%s\n", executionCount, exception.toString()));
             }
-	    if(executionCount >= retries)
-		return false;
-	    if((exception instanceof InterruptedIOException) // Timeout
-		|| (exception instanceof UnknownHostException)
-		|| (exception instanceof ConnectException) // connection refused
-		|| (exception instanceof SSLException)) // ssl handshake problem
-		return false;
-	    HttpRequest request
-		= (HttpRequest) context.getAttribute(ExecutionContext.HTTP_REQUEST);
-	    boolean idempotent = !(request instanceof HttpEntityEnclosingRequest); 
-	    if (idempotent) // Retry if the request is considered idempotent 
+            if(executionCount >= retries)
+                return false;
+            if((exception instanceof InterruptedIOException) // Timeout
+                || (exception instanceof UnknownHostException)
+                || (exception instanceof ConnectException) // connection refused
+                || (exception instanceof SSLException)) // ssl handshake problem
+                return false;
+            HttpRequest request
+                = (HttpRequest) context.getAttribute(ExecutionContext.HTTP_REQUEST);
+            boolean idempotent = !(request instanceof HttpEntityEnclosingRequest);
+            if(idempotent) // Retry if the request is considered idempotent
                 return true;
 
-	    return false;
+            return false;
         }
-		
-	static public synchronized int getRetries()
-	    {return RetryHandler.retries;}
-	static public synchronized void setRetries(int retries)
+
+        static public synchronized int getRetries()
         {
-	    if(retries > 0)
-		RetryHandler.retries = retries;
-	}
-	static public synchronized boolean getVerbose()
-	    {return RetryHandler.verbose;}
-	static public synchronized void setVerbose(boolean tf)
-	    {RetryHandler.verbose = tf;}
+            return RetryHandler.retries;
+        }
+
+        static public synchronized void setRetries(int retries)
+        {
+            if(retries > 0)
+                RetryHandler.retries = retries;
+        }
+
+        static public synchronized boolean getVerbose()
+        {
+            return RetryHandler.verbose;
+        }
+
+        static public synchronized void setVerbose(boolean tf)
+        {
+            RetryHandler.verbose = tf;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -231,12 +240,12 @@ public class HTTPSession
 
     static {
         connmgr = new PoolingClientConnectionManager();
-	connmgr.getSchemeRegistry().register(
-	    new Scheme("https", 8443,
-                       new EasySSLProtocolSocketFactory()));
-	connmgr.getSchemeRegistry().register(
-	    new Scheme("https", 443,
-                       new EasySSLProtocolSocketFactory()));
+        connmgr.getSchemeRegistry().register(
+            new Scheme("https", 8443,
+                new EasySSLProtocolSocketFactory()));
+        connmgr.getSchemeRegistry().register(
+            new Scheme("https", 443,
+                new EasySSLProtocolSocketFactory()));
         setGlobalThreadCount(DFALTTHREADCOUNT);
         setGlobalConnectionTimeout(DFALTTIMEOUT);
         setGlobalSoTimeout(DFALTTIMEOUT);
@@ -384,7 +393,7 @@ public class HTTPSession
     static public void
     setRetryCount(int count)
     {
-	RetryHandler.setRetries(count);
+        RetryHandler.setRetries(count);
     }
 
 
@@ -608,13 +617,13 @@ public class HTTPSession
             clientparams.setParameter(MAX_REDIRECTS, 25);
 
             if(globalSoTimeout > 0)
-                clientparams.setParameter(AllClientPNames.SO_TIMEOUT,globalSoTimeout);
+                clientparams.setParameter(AllClientPNames.SO_TIMEOUT, globalSoTimeout);
 
             if(globalConnectionTimeout > 0)
-                clientparams.setParameter(AllClientPNames.CONN_MANAGER_TIMEOUT,(long)globalConnectionTimeout);
+                clientparams.setParameter(AllClientPNames.CONN_MANAGER_TIMEOUT, (long) globalConnectionTimeout);
 
             if(globalAgent != null)
-                clientparams.setParameter(AllClientPNames.USER_AGENT,globalAgent);
+                clientparams.setParameter(AllClientPNames.USER_AGENT, globalAgent);
 
             setAuthenticationPreemptive(globalauthpreemptive);
 
@@ -642,17 +651,17 @@ public class HTTPSession
     public void setAuthenticationPreemptive(boolean tf)
     {
         //fix if(sessionClient != null)
-            //sessionClient.getParams().setAuthenticationPreemptive(tf);
+        //sessionClient.getParams().setAuthenticationPreemptive(tf);
     }
 
     public void setSoTimeout(int timeout)
     {
-        if(timeout >=0 ) localSoTimeout = timeout;
+        if(timeout >= 0) localSoTimeout = timeout;
     }
 
     public void setConnectionTimeout(int timeout)
     {
-        if(timeout >=0 ) localConnectionTimeout = timeout;
+        if(timeout >= 0) localConnectionTimeout = timeout;
     }
 
 
@@ -663,19 +672,19 @@ public class HTTPSession
 
     synchronized public void close()
     {
-	if(closed)
-	    return; // multiple calls ok
-	while(methodList.size() > 0) {
-           HTTPMethod m = methodList.get(0);
-           m.close(); // forcibly close; will invoke removemethod().
-       }
-       closed = true;
+        if(closed)
+            return; // multiple calls ok
+        while(methodList.size() > 0) {
+            HTTPMethod m = methodList.get(0);
+            m.close(); // forcibly close; will invoke removemethod().
+        }
+        closed = true;
     }
 
     public String getCookiePolicy()
     {
         return sessionClient == null ? null
-                                     : (String)sessionClient.getParams().getParameter(AllClientPNames.COOKIE_POLICY);
+            : (String) sessionClient.getParams().getParameter(AllClientPNames.COOKIE_POLICY);
     }
 
     public List<Cookie> getCookies()
@@ -730,7 +739,7 @@ public class HTTPSession
     {
         if(sessionClient == null) return;
         if(proxy != null && proxy.host != null) {
-            HttpHost httpproxy = new HttpHost(proxy.host,proxy.port);
+            HttpHost httpproxy = new HttpHost(proxy.host, proxy.port);
             sessionClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, httpproxy);
         }
     }

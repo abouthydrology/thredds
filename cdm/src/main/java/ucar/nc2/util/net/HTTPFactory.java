@@ -33,21 +33,6 @@
 
 package ucar.nc2.util.net;
 
-import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.*;
-
-import net.jcip.annotations.NotThreadSafe;
-import org.apache.http.*;
-import org.apache.http.client.methods.*;
-import org.apache.http.client.params.AllClientPNames;
-import org.apache.http.params.HttpParams;
-import org.apache.http.protocol.HttpContext;
-import ucar.nc2.util.EscapeStrings;
-
-
 /**
  * HTTPFactory creates method instance.
  * This code was originally in HttpMethod.

@@ -184,6 +184,7 @@ public class StructureMembers {
     private int size = 1;
     private int[] shape;
     private StructureMembers members; // only if member is type Structure
+    private boolean isvariablelength = false;
 
     // optional, use depends on ArrayStructure subclass
     private Array dataArray;
@@ -195,8 +196,7 @@ public class StructureMembers {
       this.desc = desc;
       this.units = units;
       this.dtype = dtype;
-      this.shape = shape;
-      this.size = (int) Index.computeSize(shape);
+      setShape(shape);
     }
 
     public Member(Member from) {
@@ -204,9 +204,8 @@ public class StructureMembers {
       this.desc = from.desc;
       this.units = from.units;
       this.dtype = from.dtype;
-      this.shape = from.shape;
-      this.size = (int) Index.computeSize(shape);
       this.members = from.members;
+      setShape(shape);
     }
 
     /*
@@ -224,6 +223,7 @@ public class StructureMembers {
     public void setShape(int[] shape) {
       this.shape = shape;
       this.size = (int) Index.computeSize(shape);
+      this.isvariablelength = (shape.length > 0 && shape[shape.length - 1] < 0);
     }
 
     /**
@@ -290,7 +290,7 @@ public class StructureMembers {
     }
 
     public boolean isVariableLength() {
-      return size < 0;
+      return isvariablelength;
     }
 
     /**
