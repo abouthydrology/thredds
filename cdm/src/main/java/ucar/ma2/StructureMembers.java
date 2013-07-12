@@ -205,7 +205,7 @@ public class StructureMembers {
       this.units = from.units;
       this.dtype = from.dtype;
       this.members = from.members;
-      setShape(shape);
+      setShape(from.shape);
     }
 
     /*
