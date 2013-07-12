@@ -675,15 +675,15 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
       }
 
       String trueurl = null;
+      String leadprotocol = null;
       if(allprotocols.size() == 0) {
         // The location has no lead protocols, assume file:
-	    allprotocols.add("file");
+	    leadprotocol = "file";
+        trueurl = location;
+      } else {
+        leadprotocol = allprotocols.get(0);
+        trueurl = location.substring(0,leadprotocol.length()+1);
       }
-      // re-attach the last protocol with special handling for file:
-      String lastprotocol = allprotocols.get(allprotocols.size()-1);
-      if(lastprotocol.equals("file") && buf.length() >= 2 && !buf.substring(0,2).equals("//"))
-          buf.insert(0,"//");
-	  trueurl = lastprotocol + ":" + buf.toString();
 
       // Priority in deciding
       // the service type is as follows.
@@ -692,20 +692,30 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
       // 3. path extension
       // 4. contact the server (if defined)
 
-      URI urx = null; // use URI as opposed to URL because it does not limit protocols
-      try {
-        urx = new URI(trueurl);
-      } catch (URISyntaxException  mue) {
-        throw new IOException(mue.getMessage(),mue.getCause());     
+      // remove any trailing query or fragment
+      String fragment = null;
+      int pos = trueurl.lastIndexOf('#');
+      if(pos >= 0) {
+        fragment = trueurl.substring(pos+1,trueurl.length());
+        trueurl = trueurl.substring(0,pos);
+      }
+      String query = null;
+      pos = location.lastIndexOf('?');
+      if(pos >= 0) {
+        query = trueurl.substring(pos+1,trueurl.length());
+        trueurl = trueurl.substring(0,pos);
       }
 
-      ServiceType svctype = searchFragment(trueurl);
-      String leadprotocol = allprotocols.get(0);
+      ServiceType svctype = null;
+
+      if(fragment != null)
+          svctype = searchFragment(fragment);
+
       if(svctype == null) // See if lead protocol tells us how to interpret
         svctype = decodeLeadProtocol(leadprotocol);
 
       if(svctype == null) // Look at the path file extension
-        svctype = decodePath(urx.getPath());
+        svctype = decodePathExtension(trueurl);
 
       if(svctype == null) {
         //There are several possibilities at this point; all of which
@@ -714,7 +724,7 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
         //    determine the service type
         //  - we have a simple url: e.g. http://... ; contact the server
         if(!leadprotocol.equals("file"))
-          svctype = disambiguateHttp(location);
+          svctype = disambiguateHttp(trueurl);
       }
 
       if(svctype == ServiceType.OPENDAP)
@@ -729,7 +739,8 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
       else if(svctype == ServiceType.NCML) {
           // If lead protocol was null and then pretend it was a file
           // Note that technically, this should be 'file://'
-          return acquireNcml(cache, factory, hashKey, trueurl,
+          String url = (allprotocols.size() == 0 ? "file:"+trueurl : trueurl);
+          return acquireNcml(cache, factory, hashKey, url,
                              buffer_size, cancelTask, spiObject);
       } else if(svctype == ServiceType.THREDDS) {
           Formatter log = new Formatter();
@@ -758,7 +769,7 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
      * @return ServiceType inferred from the extension or null
      */
     static ServiceType
-    decodePath(String path)
+    decodePathExtension(String path)
     {
         // Look at the path extensions
         if(path.endsWith(".dds")
@@ -823,11 +834,6 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
       // aggregation cache files are of form
       // http://www.esrl.noaa.gov/psd/thredds/dodsC/Datasets/ncep.reanalysis2.dailyavgs/pressure/air.1981.nc#320092027
 
-        // remove any fragment
-        int pos = location.lastIndexOf("#");
-        if(pos >= 0)
-            location = location.substring(0,pos);
-
         ServiceType result = checkIfDods(location); // dods
         if(result != null)
             return result;
@@ -860,10 +866,6 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
   // not sure what other opendap servers do, so fall back on check for dds
   static private ServiceType checkIfDods(String location) throws IOException {
     HTTPMethod method = null;
-    // Strip off any trailing constraints
-    if (location.indexOf('?') >= 0) {
-      location = location.substring(0, location.indexOf('?'));
-    }
     // Strip off any trailing .dds, .das, or .dods
     if (location.endsWith(".dds"))
       location = location.substring(0, location.length() - ".dds".length());
@@ -902,10 +904,6 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
   // check for dmr
   static private ServiceType checkIfDap4(String location) throws IOException {
     HTTPMethod method = null;
-    // Strip off any trailing constraints
-    if (location.indexOf('?') >= 0) {
-      location = location.substring(0, location.indexOf('?'));
-    }
     // Strip off any trailing DAP4 prefix
     if (location.endsWith(".dap"))
       location = location.substring(0, location.length() - ".dap".length());
@@ -939,16 +937,12 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
     /**
      * Given a location look for
      * markers indicated which protocol to use
-     * @param location the url whose fragment is to be examined
+     * @param fragment the fragment is to be examined
      * @return The discovered ServiceType, or null
      */
     static ServiceType
-    searchFragment(String location)
+    searchFragment(String fragment)
     {
-        int pos = location.lastIndexOf('#');
-        if(pos < 0)
-            return null;
-        String fragment = location.substring(pos+1,location.length());
         if(fragment.length() == 0)
             return null;
         Map<String,String> map = parseFragment(fragment);
