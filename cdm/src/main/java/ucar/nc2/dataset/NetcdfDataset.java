@@ -679,8 +679,11 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
         // The location has no lead protocols, assume file:
 	    allprotocols.add("file");
       }
-      // re-attach the last protocol
-	  trueurl = allprotocols.get(allprotocols.size()-1) + ":" + buf.toString();
+      // re-attach the last protocol with special handling for file:
+      String lastprotocol = allprotocols.get(allprotocols.size()-1);
+      if(lastprotocol.equals("file") && buf.length() >= 2 && !buf.substring(0,2).equals("//"))
+          buf.insert(0,"//");
+	  trueurl = lastprotocol + ":" + buf.toString();
 
       // Priority in deciding
       // the service type is as follows.
@@ -726,7 +729,7 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
       else if(svctype == ServiceType.NCML) {
           // If lead protocol was null and then pretend it was a file
           // Note that technically, this should be 'file://'
-          return acquireNcml(cache, factory, hashKey, "file:"+location,
+          return acquireNcml(cache, factory, hashKey, trueurl,
                              buffer_size, cancelTask, spiObject);
       } else if(svctype == ServiceType.THREDDS) {
           Formatter log = new Formatter();
