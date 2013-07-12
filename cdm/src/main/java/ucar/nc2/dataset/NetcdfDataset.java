@@ -658,34 +658,29 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
       // there may be more than one.
       // Watch out for Windows paths starting with a drive letter.
 
-      String[] allprotocols = location.split("[:]"); // all leading protocols
-      String trueurl = null; // keep only the last protocol occurrence
-      String leadprotocol = null;
-      switch (allprotocols.length) {
-      case 0: assert false : "Internal error";
-      case 1:
-        // The location has no instances of ':',
-        // so assume it is a file path
-        trueurl = "file:" + location; 
-        leadprotocol = "file";
-        break;
-      case 2:
-        // either one lead protocol or a Windows drive letter
-        String protocol = allprotocols[0];
-        if(protocol.length() == 1 && DRIVE_LETTERS.indexOf(protocol.charAt(0)) >= 0) {
-          leadprotocol = "file";
-          trueurl = "file:" + location;  // treat like a file
-        } else {
-          leadprotocol = protocol;
-          trueurl = location;
-        }
-        break;          
+      List<String> allprotocols = new ArrayList<String>(); // all leading protocols upto path or host
 
-      default: // cases 3...
-        leadprotocol = allprotocols[0];
-        trueurl = location.substring((leadprotocol.length())+1 /*+1 for ':'*/, location.length());
-        break;
+      // Note, we cannot use split because of the context sensitivity
+      StringBuilder buf = new StringBuilder(location);
+      for(;;) {
+        int index = buf.indexOf(":");
+        if(index < 0) break; // no more protocols
+        String protocol = buf.substring(0,index);
+        // Check for windows drive letter
+            if(index == 1 //=>|protocol| == 1
+           && DRIVE_LETTERS.indexOf(buf.charAt(0)) >= 0) break;
+        allprotocols.add(protocol);
+        buf.delete(0,index+1); // remove the leading protocol
+        if(buf.indexOf("/") == 0)break; // anything after this is not a protocol
       }
+
+      String trueurl = null;
+      if(allprotocols.size() == 0) {
+        // The location has no lead protocols, assume file:
+	    allprotocols.add("file");
+      }
+      // re-attach the last protocol
+	  trueurl = allprotocols.get(allprotocols.size()-1) + ":" + buf.toString();
 
       // Priority in deciding
       // the service type is as follows.
@@ -694,15 +689,15 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
       // 3. path extension
       // 4. contact the server (if defined)
 
-      URL urx = null;
+      URI urx = null; // use URI as opposed to URL because it does not limit protocols
       try {
-        urx = new URL(trueurl);
-      } catch (MalformedURLException mue) {
+        urx = new URI(trueurl);
+      } catch (URISyntaxException  mue) {
         throw new IOException(mue.getMessage(),mue.getCause());     
       }
 
       ServiceType svctype = searchFragment(trueurl);
-
+      String leadprotocol = allprotocols.get(0);
       if(svctype == null) // See if lead protocol tells us how to interpret
         svctype = decodeLeadProtocol(leadprotocol);
 
@@ -813,7 +808,7 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
    * It looks for the header "Content-Description"
    * and uses it value (e.g. "ncstream" or "dods", etc)
    * in order to disambiguate.
-   * @param urx the url to disambiguate
+   * @param location the url to disambiguate
    * @param location the original url string
    * @return ServiceType indicating how to handle the url
    */
