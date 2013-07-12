@@ -674,15 +674,13 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
         if(buf.indexOf("/") == 0)break; // anything after this is not a protocol
       }
 
-      String trueurl = null;
+      String trueurl = location;
       String leadprotocol = null;
       if(allprotocols.size() == 0) {
         // The location has no lead protocols, assume file:
 	    leadprotocol = "file";
-        trueurl = location;
       } else {
         leadprotocol = allprotocols.get(0);
-        trueurl = location.substring(0,leadprotocol.length()+1);
       }
 
       // Priority in deciding
@@ -866,13 +864,14 @@ public class NetcdfDataset extends ucar.nc2.NetcdfFile {
   // not sure what other opendap servers do, so fall back on check for dds
   static private ServiceType checkIfDods(String location) throws IOException {
     HTTPMethod method = null;
+    int len = location.length();
     // Strip off any trailing .dds, .das, or .dods
     if (location.endsWith(".dds"))
-      location = location.substring(0, location.length() - ".dds".length());
+      location = location.substring(0,  len - ".dds".length());
     if (location.endsWith(".das"))
-      location = location.substring(0, location.length() - ".das".length());
+      location = location.substring(0, len - ".das".length());
     if (location.endsWith(".dods"))
-      location = location.substring(0, location.length() - ".dods".length());
+      location = location.substring(0, len - ".dods".length());
     // Opendap assumes that the caller has properly escaped the url
     try {
       // For some reason, the head method is not using credentials
