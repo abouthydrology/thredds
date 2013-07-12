@@ -228,33 +228,42 @@ public class HTTPSession
             if(verbose) {
                 HTTPSession.log.debug(String.format("Retry: count=%d exception=%s\n", executionCount, exception.toString()));
             }
-	    if(executionCount >= retries)
-		return false;
-	    if((exception instanceof InterruptedIOException) // Timeout
-		|| (exception instanceof UnknownHostException)
-		|| (exception instanceof ConnectException) // connection refused
-		|| (exception instanceof SSLException)) // ssl handshake problem
-		return false;
-	    HttpRequest request
-		= (HttpRequest) context.getAttribute(ExecutionContext.HTTP_REQUEST);
-	    boolean idempotent = !(request instanceof HttpEntityEnclosingRequest); 
-	    if (idempotent) // Retry if the request is considered idempotent 
+            if(executionCount >= retries)
+                return false;
+            if((exception instanceof InterruptedIOException) // Timeout
+                || (exception instanceof UnknownHostException)
+                || (exception instanceof ConnectException) // connection refused
+                || (exception instanceof SSLException)) // ssl handshake problem
+                return false;
+            HttpRequest request
+                = (HttpRequest) context.getAttribute(ExecutionContext.HTTP_REQUEST);
+            boolean idempotent = !(request instanceof HttpEntityEnclosingRequest);
+            if(idempotent) // Retry if the request is considered idempotent
                 return true;
 
-	    return false;
+            return false;
         }
-		
-	static public synchronized int getRetries()
-	    {return RetryHandler.retries;}
-	static public synchronized void setRetries(int retries)
+
+        static public synchronized int getRetries()
         {
-	    if(retries > 0)
-		RetryHandler.retries = retries;
-	}
-	static public synchronized boolean getVerbose()
-	    {return RetryHandler.verbose;}
-	static public synchronized void setVerbose(boolean tf)
-	    {RetryHandler.verbose = tf;}
+            return RetryHandler.retries;
+        }
+
+        static public synchronized void setRetries(int retries)
+        {
+            if(retries > 0)
+                RetryHandler.retries = retries;
+        }
+
+        static public synchronized boolean getVerbose()
+        {
+            return RetryHandler.verbose;
+        }
+
+        static public synchronized void setVerbose(boolean tf)
+        {
+            RetryHandler.verbose = tf;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////
