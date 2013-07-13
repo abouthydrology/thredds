@@ -132,31 +132,19 @@ public class TestState extends UnitTestCommon
         methodcount = session.getMethodcount();
         assertTrue(methodcount == 1);
         method.execute(TESTSOURCE1);
-        String body = method.getResponseAsString();
-        stream = (HTTPMethodStream) method.getResponseBodyAsStream();
-        byte[] bbody = readbinaryfile(stream);
-        method.close();
-        assertTrue(stream.isClosed());
-        assertFalse(method.hasStreamOpen());
+        String body = method.getResponseAsString();// will close stream
+        try {
+            stream = (HTTPMethodStream) method.getResponseBodyAsStream();
+            readbinaryfile(stream);
+            System.err.println("Stream not closed.");
+            assertFalse(stream.isClosed());
+        } catch (Exception e) {
+            assertFalse(method.hasStreamOpen());
+        }
         assertTrue(method.isClosed());
         methodcount = session.getMethodcount();
         assertTrue(methodcount == 0);
         assertTrue(session.isClosed());
-
-        // Finally, do a content comparison
-        String s = new String(bbody,UTF8);
-        if(verbose) {
-            System.err.println("Body as String:\n"+body);
-            System.err.println("Body as Bytes:\n"+s);
-        }
-
-        String compare = compare("TestState",body,s);
-        if(compare != null) {
-            System.out.println(compare);
-            pass = false;
-        } else
-            pass = true;
-        assertTrue(pass);
     }
 
     static public byte[]

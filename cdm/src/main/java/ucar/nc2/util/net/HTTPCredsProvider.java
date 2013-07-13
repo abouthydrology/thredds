@@ -41,9 +41,12 @@ import java.io.Serializable;
 import java.security.Principal;
 
 
-//////////////////////////////////////////////////
-// Provide a non-interactive CredentialsProvider to hold
-// an arbitrary credentials object provided by the user.
+/**
+Provide a non-interactive CredentialsProvider to hold
+an arbitrary credentials object provided by the user.
+This is used in the case when the credentials (not the provider)
+are fixed. (see e.g. HTTPSession.setGlobalCredentials).
+*/
 
 public class HTTPCredsProvider implements CredentialsProvider, Credentials, Serializable
 {
