@@ -48,6 +48,7 @@ import org.apache.http.client.params.AllClientPNames;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
@@ -481,6 +482,7 @@ public class HTTPMethod
             Charset cset = Charset.forName(charset);
             content = EntityUtils.toString(response.getEntity(),cset);
         } catch (Exception e) {/*ignore*/}
+        close();//getting the response will disallow later stream
         return content;
     }
 
@@ -706,7 +708,7 @@ public class HTTPMethod
      * We do not know, necessarily,
      * which scheme(s) will be
      * encountered, so most testing
-     * occurs in HTTPAuthCreds.
+     * occurs in HTTPAuthProvider
      */
 
     static synchronized private void
@@ -714,15 +716,13 @@ public class HTTPMethod
     {
         String url = session.getURL();
         if(url == null) url = HTTPAuthStore.ANY_URL;
-	HttpParams params = method.getMethodParameters();
-	if(params == null) return;
-	
 
-        //todo: Pass down info to the socket factory
         // Provide a credentials (provider) to enact the process
-        //CredentialsProvider cp = new HTTPAuthProvider(url, method);
+        CredentialsProvider cp = new HTTPAuthProvider(url, method);
         // Since we not know where this will get called, do everywhere
-        //session.sessionClient.getParams().setParameter(CredentialsProvider.PROVIDER, cp);
+        if(session != null && session.sessionClient != null) {
+            session.sessionClient.setCredentialsProvider(cp);
+        }
         //HttpParams hcp = session.sessionClient.getConnectionManager().getParams();
         //hcp.setParameter(CredentialsProvider.PROVIDER, cp);
 
