@@ -148,6 +148,8 @@ public class  Index implements Cloneable {
 
   protected int[] current; // current element's index, used only for the general case
 
+  protected boolean hasvlen = false;
+
   /**
    * General case Index - use when you want to manipulate current elements yourself
    * @param rank rank of the Index
@@ -157,6 +159,7 @@ public class  Index implements Cloneable {
     shape = new int[rank];
     current = new int[rank];
     stride = new int[rank];
+    hasvlen = false;
   }
 
   /**
@@ -172,6 +175,7 @@ public class  Index implements Cloneable {
     stride = new int[rank];
     size = computeStrides(shape, stride);
     offset = 0;
+    hasvlen = (shape.length > 0 && shape[shape.length-1] < 0);
   }
 
   /**
@@ -191,6 +195,7 @@ public class  Index implements Cloneable {
     current = new int[rank];
     size = computeSize(shape);
     offset = 0;
+    hasvlen = (shape.length > 0 && shape[shape.length-1] < 0);
   }
 
   /**
@@ -212,11 +217,11 @@ public class  Index implements Cloneable {
       throw new IllegalArgumentException();
 
     Index i = (Index) this.clone();
-    if(shape[index-1] < 0) index--;
-    i.offset += stride[index] * (shape[index] - 1);
-    i.stride[index] = -stride[index];
-
-    i.fastIterator = false;
+    if(shape[index] >= 0) {// !vlen case
+        i.offset += stride[index] * (shape[index] - 1);
+        i.stride[index] = -stride[index];
+    }
+     i.fastIterator = false;
     i.precalc(); // any subclass-specific optimizations
     return i;
   }
@@ -409,7 +414,7 @@ public class  Index implements Cloneable {
   }
 
   /**
-   * create a new Index based on a permutation of the current indices
+   * create a new Index based on a permutation of the current indices; vlen fails.
    *
    * @param dims: the old index dim[k] becomes the new kth index.
    * @return new Index with permuted indices
@@ -525,6 +530,7 @@ public class  Index implements Cloneable {
   public void setCurrentCounter(int currElement) {
     currElement -= offset;
     for (int ii = 0; ii < rank; ii++) { // general rank
+      if(shape[ii] < 0) {current[ii] = -1; break;}
       current[ii] = currElement / stride[ii];
       currElement -= current[ii] * stride[ii];
     }
@@ -533,19 +539,17 @@ public class  Index implements Cloneable {
 
   /**
    * Increment the current element by 1. Used by IndexIterator.
-   * General rank, with subclass specialization.
+   * General rank, with subclass specialization. Vlen skipped.
    *
    * @return currentElement()
    */
   public int incr() {
     int digit = rank - 1;
     while (digit >= 0) {
+      if(shape[digit] < 0) {current[digit] = -1; continue;} // do not increment vlen
       current[digit]++;
-      if (shape[digit] >= 0) {//!VLEN
-        if(current[digit] < shape[digit])
-            break;                        // normal exit
-        current[digit] = 0;               // else, carry
-      }
+      if(current[digit] < shape[digit])
+          break;                        // normal exit
       current[digit] = 0;               // else, carry
       digit--;
     }
@@ -563,8 +567,9 @@ public class  Index implements Cloneable {
   public Index set(int[] index) {
     if (index.length != rank)
       throw new ArrayIndexOutOfBoundsException();
-
-    System.arraycopy(index, 0, current, 0, rank);
+    int prefixrank = (hasvlen ? rank : rank -1);
+    System.arraycopy(index, 0, current, 0, prefixrank);
+    if(hasvlen) current[prefixrank] = -1;
     return this;
   }
 
@@ -577,7 +582,8 @@ public class  Index implements Cloneable {
   public void setDim(int dim, int value) {
     if (value < 0 || value >= shape[dim])  // check index here
       throw new ArrayIndexOutOfBoundsException();
-    current[dim] = value;
+    if(shape[dim] >= 0) //!vlen
+        current[dim] = value;
   }
 
   /**

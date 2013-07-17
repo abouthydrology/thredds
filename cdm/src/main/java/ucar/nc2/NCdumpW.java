@@ -467,12 +467,10 @@ public class NCdumpW {
 
     } else if (array.getElementType() == ByteBuffer.class) { // opaque type
       array.resetLocalIterator();
-      while (array.hasNext()) {
-        printByteBuffer(out, (ByteBuffer) array.next(), ilev);
-        out.println(",");
-        if (ct != null && ct.isCancel()) return;
+      while(array.hasNext()) {
+          printByteBuffer(out, (ByteBuffer)array.next(),ilev);
+          out.println(array.hasNext() ? "," : ";");// peek ahead
       }
-
     } else if (array instanceof ArrayObject) {
       printVariableArray(out, (ArrayObject) array, ilev, ct);
 
