@@ -1633,7 +1633,7 @@ public class Nc4Iosp extends AbstractIOServiceProvider implements IOServiceProvi
         int destPos = pos + m.getDataParam();
         Array result = decodeVlen(m.getDataType(), pos + m.getDataParam(), bb);
         int index = asbb.addObjectToHeap(result);
-        bb.order(ByteOrder.nativeOrder()); // the string index is always written in "native order"
+        bb.order(ByteOrder.nativeOrder());
         bb.putInt(destPos, index); // overwrite with the index into the StringHeap
       }
     }

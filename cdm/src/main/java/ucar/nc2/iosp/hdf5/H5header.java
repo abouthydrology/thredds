@@ -1345,6 +1345,8 @@ public class H5header {
     // special case of variable length strings
     if (v.getDataType() == DataType.STRING)
       v.setElementSize(16); // because the array has elements that are HeapIdentifier
+    else if (v.getDataType() == DataType.OPAQUE) // special case of opaque
+      v.setElementSize(facade.dobj.mdt.getBaseSize());
 
     v.setSPobject(vinfo);
 
@@ -1470,6 +1472,8 @@ public class H5header {
     // special case of variable length strings
     if (v.getDataType() == DataType.STRING)
       v.setElementSize(16); // because the array has elements that are HeapIdentifier
+    else if (v.getDataType() == DataType.OPAQUE) // special case of opaque
+      v.setElementSize(mdt.getBaseSize());
 
     v.setSPobject(vinfo);
     vinfo.setOwner(v);
@@ -1520,14 +1524,18 @@ public class H5header {
     int[] dim = (msd != null) ? msd.dimLength : new int[0];
     if (dim == null) dim = new int[0]; // scaler
 
+    boolean hasvlen = (mdt != null && mdt.base != null && !mdt.base.isVString && mdt.base.type == 9);
+
     // merge the shape for array type (10)
     if (mdt.type == 10) {
       int len = dim.length + mdt.dim.length;
+      if(hasvlen) len++;
       int[] combinedDim = new int[len];
       for (int i = 0; i < dim.length; i++)
         combinedDim[i] = dim[i];  // the dataspace is the outer (slow) dimensions
       for (int i = 0; i < mdt.dim.length; i++)
         combinedDim[dim.length + i] = mdt.dim[i];  // type 10 is the inner dimensions
+      if(hasvlen) combinedDim[len-1] = -1;
       dim = combinedDim;
     }
 
@@ -4204,7 +4212,7 @@ public class H5header {
    * @param globalHeapIdAddress address of the heapId, used to get the String out of the heap
    * @param dataType type of data
    * @param endian byteOrder of the data (0 = BE, 1 = LE)
-   * @return String the String read from the heap
+   * @return  the Array read from the heap
    * @throws IOException on read error
    */
   Array getHeapDataArray(long globalHeapIdAddress, DataType dataType, int endian) throws IOException, InvalidRangeException {

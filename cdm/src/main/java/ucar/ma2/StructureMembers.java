@@ -308,6 +308,8 @@ public class StructureMembers {
         return getDataType().getSize();
       else if (getDataType() == DataType.STRUCTURE)
         return size * members.getStructureSize();
+      else if(this.isVariableLength())
+          return 0; // do not know
       else
         return size * getDataType().getSize();
     }
