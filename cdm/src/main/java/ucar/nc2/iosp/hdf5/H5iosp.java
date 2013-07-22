@@ -256,7 +256,7 @@ public class H5iosp extends AbstractIOServiceProvider {
       // general case is to read an array of vlen objects
       // each vlen generates an Array - so return ArrayObject of Array
       //boolean scalar = false; // layout.getTotalNelems() == 1; // if scalar, return just the len Array // remove 12/25/10 jcaron
-      Object[] data = new Object[(int) layout.getTotalNelems()];
+      Array[] data = new Array[(int) layout.getTotalNelems()];
       int count = 0;
       while (layout.hasNext()) {
         Layout.Chunk chunk = layout.next();
@@ -267,8 +267,28 @@ public class H5iosp extends AbstractIOServiceProvider {
           data[count++] = (typeInfo.base.hdfType == 7) ? convertReference(vlenArray) : vlenArray;
         }
       }
+      int prefixrank = 0;
+      for(int i=0;i<shape.length;i++) {if(shape[i] < 0) {prefixrank = i; break;}}
+      Array result = null;
+      if(prefixrank == 0) // if scalar, return just the singleton vlen array
+        result = data[0];
+      else if(prefixrank == 1)
+        result = new ArrayObject(data[0].getClass(), new int[]{count}, data);
+      else {
+          // Otherwise create and fill in an n-dimensional Array Of Arrays
+          int[] newshape = new int[prefixrank];
+          System.arraycopy(shape, 0, newshape, 0, prefixrank);
+          Array ndimarray = Array.factory(Array.class, newshape);
+          // Transfer the elements of data into the n-dim arrays
+          IndexIterator iter = ndimarray.getIndexIterator();
+          for(int i = 0;iter.hasNext();i++) {
+              iter.setObjectNext(data[i]);
+          }
+          result = ndimarray;
+      }
       //return (scalar) ? data[0] : new ArrayObject(data[0].getClass(), shape, data);
-      return new ArrayObject(data[0].getClass(), shape, data);
+      //return new ArrayObject(data[0].getClass(), shape, data);
+      return result;
     }
 
     if (dataType == DataType.STRUCTURE) {  // LOOK what about subset ?

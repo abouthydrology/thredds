@@ -144,7 +144,14 @@ public class EnumTypedef extends CDMNode {
 
   protected void writeCDL(Formatter out, Indent indent, boolean strict) {
     String name = strict ? NetcdfFile.makeValidCDLName(getShortName()) : getShortName();
-    out.format("%senum %s { ", indent, name);
+    String basetype = "";
+    switch (this.basetype) {
+    case ENUM1: basetype = "byte "; break;
+    case ENUM2: basetype = "short "; break;
+    case ENUM4: basetype = ""; break;
+    default: assert false : "Internal error";
+    }
+    out.format("%s%senum %s { ", indent, basetype, name);
     int count = 0;
     List<Object> keyset = Arrays.asList(map.keySet().toArray());
     //Collections.sort(keyset);

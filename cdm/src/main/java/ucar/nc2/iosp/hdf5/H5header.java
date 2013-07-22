@@ -508,7 +508,14 @@ public class H5header {
         if (facadeNested.dobj.mdt.map != null) {
           EnumTypedef enumTypedef = ncGroup.findEnumeration(facadeNested.name);
           if (enumTypedef == null) {
-            enumTypedef = new EnumTypedef(facadeNested.name, facadeNested.dobj.mdt.map);
+            DataType basetype;
+            switch (facadeNested.dobj.mdt.byteSize) {
+            case 1: basetype = DataType.ENUM1; break;
+            case 2: basetype = DataType.ENUM2; break;
+            case 4: basetype = DataType.ENUM4; break;
+            default: basetype = DataType.ENUM4; break;
+            }
+            enumTypedef = new EnumTypedef(facadeNested.name, facadeNested.dobj.mdt.map, basetype);
             ncGroup.addEnumeration(enumTypedef);
           }
         }
