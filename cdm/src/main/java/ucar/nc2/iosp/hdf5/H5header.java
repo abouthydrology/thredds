@@ -1531,7 +1531,7 @@ public class H5header {
     int[] dim = (msd != null) ? msd.dimLength : new int[0];
     if (dim == null) dim = new int[0]; // scaler
 
-    boolean hasvlen = (mdt != null && mdt.base != null && !mdt.base.isVString && mdt.base.type == 9);
+    boolean hasvlen = (mdt != null && mdt.isVlen);
 
     // merge the shape for array type (10)
     if (mdt.type == 10) {
@@ -1564,7 +1564,7 @@ public class H5header {
           v.setDimensionsAnonymous(shape);
         }
 
-       } else if ((mdt.type == 9) && !mdt.isVString) { // variable length (not a string)
+       } else if (mdt.isVlen) { // variable length (not a string)
 
         if ((dim.length == 1) && (dim[0] == 1)) { // replace scalar with vlen
           int[] shape = new int[] {-1};
@@ -1621,6 +1621,8 @@ public class H5header {
     int[] storageSize;  // for type 1 (continuous) : mds.dimLength;
                         // for type 2 (chunked)    : msl.chunkSize (last number is element size)
                         // null for attributes
+
+    boolean isvlen = false; // VLEN, but not vlenstring
 
     // chunked stuff
     boolean isChunked = false;
@@ -1694,6 +1696,8 @@ public class H5header {
       this.mds = facade.dobj.mds;
       this.mfp = facade.dobj.mfp;
 
+      isvlen = this.mdt.isVlen;
+
       if (!facade.dobj.mdt.isOK && warnings) {
         debugOut.println("WARNING HDF5 file " + ncfile.getLocation() + " not handling " + facade.dobj.mdt);
         return; // not a supported datatype
@@ -1727,6 +1731,7 @@ public class H5header {
         debugOut.println("WARNING HDF5 file " + ncfile.getLocation() + " not handling " + mdt);
         return; // not a supported datatype
       }
+      isvlen = this.mdt.isVlen;
 
       // figure out the data type
       //this.hdfType = mdt.type;
@@ -1800,6 +1805,7 @@ public class H5header {
 
       } else if (hdfType == 9) { // variable length array
         tinfo.isVString = mdt.isVString;
+        tinfo.isVlen = mdt.isVlen;
         if (mdt.isVString) {
           tinfo.vpad = ((flags[0] >> 4) & 0xf);
           tinfo.dataType = DataType.STRING;
@@ -1809,7 +1815,7 @@ public class H5header {
         }
       } else if (hdfType == 10) { // array : used for structure members
         tinfo.endian = (mdt.getFlags()[0] & 1) == 0 ? RandomAccessFile.LITTLE_ENDIAN : RandomAccessFile.BIG_ENDIAN;
-        if ((mdt.base.type == 9) && mdt.base.isVString) {
+        if (mdt.isVString){
           tinfo.dataType = DataType.STRING;
         } else
           tinfo.dataType = getNCtype(mdt.getBaseType(), mdt.getBaseSize());
@@ -1999,6 +2005,7 @@ public class H5header {
     int endian = -1; // 1 = RandomAccessFile.LITTLE_ENDIAN || 0 = RandomAccessFile.BIG_ENDIAN
     boolean unsigned;
     boolean isVString; // is it a vlen string ?
+    boolean isVlen; // vlen but not string
     int vpad;          // string padding
     TypeInfo base;     // vlen, enum
 
@@ -3066,6 +3073,7 @@ public class H5header {
     // enum, variable-length, array types have "base" DataType
     MessageDatatype base;
     boolean isVString; // variable length (not a string)
+    boolean isVlen; // vlen but not string
 
     // array (10)
     int[] dim;
@@ -3229,6 +3237,7 @@ public class H5header {
 
       } else if (type == 9) { // variable-length
         isVString = (flags[0] & 0xf) == 1;
+        if(!isVString) isVlen = true;
         if (debug1)
           debugOut.println("   type 9(variable length): type= " + (isVString ? "string" : "sequence of type:"));
         base = new MessageDatatype(); // base type
