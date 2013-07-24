@@ -125,24 +125,24 @@ public class Nc4Iosp extends AbstractIOServiceProvider implements IOServiceProvi
 
     /**
      * set the path and name of the netcdf c library.
-     * must be called before load() is called.     *
+     * must be called before load() is called.
+     * Order of priority is (currently):
+     * 1. -Djna.library.path
+     * 2. JNA_PATH env variable
+     * 3. jna_path argument to this function.
      *
      * @param jna_path path
      * @param libname  library name
      */
     static public void setLibraryAndPath(String jna_path, String libname)
     {
-        if(jna_path == null) {
-            if(System.getProperty(JNA_PATH) == null) {
-                String env = System.getenv(JNA_PATH_ENV);
-                if(env != null && env.length() > 0)
-                    jna_path = env;
-            }
+        String jnapathD = System.getProperty(JNA_PATH);
+        if(jnapathD == null || jnapathD.length() == 0) {
+            jnapathD = jna_path;
+            if(jnapathD == null || jnapathD.length() == 0)
+                System.setProperty(JNA_PATH, jnapathD);
         }
-        if(jna_path != null) {
-            jnaPath = jna_path;
-            System.setProperty(JNA_PATH, jnaPath);
-        }
+        jnaPath = jnapathD;
         if(libname != null)
             libName = libname;
     }
@@ -166,9 +166,12 @@ public class Nc4Iosp extends AbstractIOServiceProvider implements IOServiceProvi
     }
 
     static {
-        String jnapath = System.getenv(JNA_PATH_ENV);
-        if(jnapath != null && jnapath.length() > 0 && System.getProperty(JNA_PATH) == null)
-            System.setProperty(JNA_PATH, jnapath);
+        String jnapath = System.getProperty(JNA_PATH);
+        if(jnapath == null || jnapath.length() == 0){
+            jnapath = System.getenv(JNA_PATH_ENV);
+            if(jnapath != null && jnapath.length() > 0)
+                System.setProperty(JNA_PATH, jnapath);
+        }
     }
 
     //////////////////////////////////////////////////
@@ -1789,7 +1792,14 @@ public class Nc4Iosp extends AbstractIOServiceProvider implements IOServiceProvi
             data = p.getCharArray(0, n);
             break;
         case STRING: /*String[]*/
-            data = p.getStringArray(0, n);
+            // For now we need to use p.getString()
+            // because p.getStringArray(int,int) does not exist
+            // in jna version 3.0.9, but does exist in
+            // verssion 4.0 and possibly some intermediate versions
+            String[] stringdata = new String[n];
+            for(int i=0;i<n;i++)
+                stringdata[i] = p.getString(i*8);
+            data = stringdata;
             break;
         case OPAQUE:
         case STRUCTURE:
