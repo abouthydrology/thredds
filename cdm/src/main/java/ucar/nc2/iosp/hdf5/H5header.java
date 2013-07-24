@@ -1531,7 +1531,7 @@ public class H5header {
     int[] dim = (msd != null) ? msd.dimLength : new int[0];
     if (dim == null) dim = new int[0]; // scaler
 
-    boolean hasvlen = (mdt != null && mdt.isVlen);
+    boolean hasvlen = (mdt != null && mdt.isVlen());
 
     // merge the shape for array type (10)
     if (mdt.type == 10) {
@@ -1564,7 +1564,7 @@ public class H5header {
           v.setDimensionsAnonymous(shape);
         }
 
-       } else if (mdt.isVlen) { // variable length (not a string)
+       } else if (mdt.isVlen()) { // variable length (not a string)
 
         if ((dim.length == 1) && (dim[0] == 1)) { // replace scalar with vlen
           int[] shape = new int[] {-1};
@@ -1696,8 +1696,7 @@ public class H5header {
       this.mds = facade.dobj.mds;
       this.mfp = facade.dobj.mfp;
 
-      isvlen = this.mdt.isVlen;
-
+      isvlen = this.mdt.isVlen();
       if (!facade.dobj.mdt.isOK && warnings) {
         debugOut.println("WARNING HDF5 file " + ncfile.getLocation() + " not handling " + facade.dobj.mdt);
         return; // not a supported datatype
@@ -1731,7 +1730,8 @@ public class H5header {
         debugOut.println("WARNING HDF5 file " + ncfile.getLocation() + " not handling " + mdt);
         return; // not a supported datatype
       }
-      isvlen = this.mdt.isVlen;
+
+      isvlen = this.mdt.isVlen() ;
 
       // figure out the data type
       //this.hdfType = mdt.type;
@@ -1815,11 +1815,12 @@ public class H5header {
         }
       } else if (hdfType == 10) { // array : used for structure members
         tinfo.endian = (mdt.getFlags()[0] & 1) == 0 ? RandomAccessFile.LITTLE_ENDIAN : RandomAccessFile.BIG_ENDIAN;
-        if (mdt.isVString){
+        if (mdt.isVString()){
           tinfo.dataType = DataType.STRING;
-        } else
-          tinfo.dataType = getNCtype(mdt.getBaseType(), mdt.getBaseSize());
-
+        } else {
+          int basetype = mdt.getBaseType();
+          tinfo.dataType = getNCtype(basetype, mdt.getBaseSize());
+        }
       } else if (warnings) {
         debugOut.println("WARNING not handling hdf dataType = " + hdfType + " size= " + byteSize);
       }
@@ -3096,9 +3097,10 @@ public class H5header {
           f.format("   %s%n", mm);
       } else if (type == 7)
         f.format(" referenceType= %s", referenceType);
-      else if (type == 9)
-        f.format(" isVString= %s", isVString);
-      if ((type == 9) || (type == 10))
+      else if (type == 9) {
+          f.format(" isVString= %s", isVString);
+          f.format(" isVlen= %s", isVlen);
+      } if ((type == 9) || (type == 10))
         f.format(" parent base= {%s}", base);
       return f.toString();
     }
@@ -3279,6 +3281,16 @@ public class H5header {
 
     byte[] getFlags() {
       return (base != null) ? base.getFlags() : flags;
+    }
+
+    boolean isVlen()
+    {
+        return (type == 10 ? base.isVlen() : isVlen);
+    }
+
+    boolean isVString()
+    {
+        return (type == 10 ? base.isVString() : isVString);
     }
   }
 
