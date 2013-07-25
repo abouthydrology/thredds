@@ -49,6 +49,7 @@ import ucar.nc2.write.Nc4ChunkingStrategyImpl;
 import ucar.unidata.io.RandomAccessFile;
 import ucar.ma2.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -136,17 +137,17 @@ public class Nc4Iosp extends AbstractIOServiceProvider implements IOServiceProvi
      */
     static public void setLibraryAndPath(String jna_path, String libname)
     {
-	// See if jna_path exists
+        // See if jna_path exists
         File f = new File(jna_path);
         if(!f.exists())
-	    jna_path = null; // ignore it
-	if(jna_path == null || jna_path.length() == 0) {
+            jna_path = null; // ignore it
+        if(jna_path == null || jna_path.length() == 0) {
             jna_path = System.getProperty(JNA_PATH);
             if(jna_path == null || jna_path.length() == 0)
-		jna_path = System.getenv(JNA_PATH_ENV);
-	}
-	if(jna_path != null && jna_path.length() > 0)
-	    System.setProperty(JNA_PATH, jna_path);
+                jna_path = System.getenv(JNA_PATH_ENV);
+        }
+        if(jna_path != null && jna_path.length() > 0)
+            System.setProperty(JNA_PATH, jna_path);
         if(libname != null)
             libName = libname;
     }
