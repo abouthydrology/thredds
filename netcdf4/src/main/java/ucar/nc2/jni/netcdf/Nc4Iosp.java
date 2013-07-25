@@ -127,22 +127,26 @@ public class Nc4Iosp extends AbstractIOServiceProvider implements IOServiceProvi
      * set the path and name of the netcdf c library.
      * must be called before load() is called.
      * Order of priority is (currently):
+     * 1. jna_path argument to this function, it if exists
      * 1. -Djna.library.path
      * 2. JNA_PATH env variable
-     * 3. jna_path argument to this function.
      *
      * @param jna_path path
      * @param libname  library name
      */
     static public void setLibraryAndPath(String jna_path, String libname)
     {
-        String jnapathD = System.getProperty(JNA_PATH);
-        if(jnapathD == null || jnapathD.length() == 0) {
-            jnapathD = jna_path;
-            if(jnapathD == null || jnapathD.length() == 0)
-                System.setProperty(JNA_PATH, jnapathD);
-        }
-        jnaPath = jnapathD;
+	// See if jna_path exists
+        File f = new File(jna_path);
+        if(!f.exists())
+	    jna_path = null; // ignore it
+	if(jna_path == null || jna_path.length() == 0) {
+            jna_path = System.getProperty(JNA_PATH);
+            if(jna_path == null || jna_path.length() == 0)
+		jna_path = System.getenv(JNA_PATH_ENV);
+	}
+	if(jna_path != null && jna_path.length() > 0)
+	    System.setProperty(JNA_PATH, jna_path);
         if(libname != null)
             libName = libname;
     }
